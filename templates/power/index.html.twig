@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Welcome!{% endblock %}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 128 128%22><text y=%221.2em%22 font-size=%2296%22>⚫️</text></svg>">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+</head>
+<body>
+
+{% include 'navbar.html.twig' %}
+
+{% block body %}
+    <div class="container mt-4">
+        <h1 class="text-center">Listado de Precios de Potencia</h1>
+        {% for label, messages in app.flashes %}
+            <div class="alert alert-{{ label == 'error' ? 'danger' : label }}" style="margin-top: 10px;">
+                {% for message in messages %}
+                    {{ message }}
+                {% endfor %}
+            </div>
+        {% endfor %}
+        <div class="mb-3">
+            <a href="{{ path('app_power_create') }}" class="btn btn-primary">Crear Nuevo Precio de Potencia</a>
+        </div>
+
+        <table class="table table-bordered">
+            <thead class="table-light">
+            <tr>
+                <th>ID</th>
+                <th>Potencia P1</th>
+                <th>Potencia P2</th>
+                <th>Potencia P3</th>
+                <th>Fecha de Inicio</th>
+                <th>Fecha de Fin</th>
+                <th>Usuario</th>
+                <th>Creado En</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for powerPrice in powerPrices %}
+                <tr id="power_price_row_{{ powerPrice.id }}">
+                    <td>{{ powerPrice.id }}</td>
+                    <td>{{ powerPrice.powerP1 }}</td>
+                    <td>{{ powerPrice.powerP2 }}</td>
+                    <td>{{ powerPrice.powerP3 }}</td>
+                    <td>{{ powerPrice.startDate ? powerPrice.startDate|date('Y-m-d') : '' }}</td>
+                    <td>{{ powerPrice.endDate ? powerPrice.endDate|date('Y-m-d') : '' }}</td>
+                    <td>{{ powerPrice.username }}</td>
+                    <td>{{ powerPrice.createdAt ? powerPrice.createdAt|date('Y-m-d H:i:s') : '' }}</td>
+                    <td>
+                        <a href="{{ path('app_power_update', { id: powerPrice.id }) }}" class="btn btn-warning btn-sm">Editar</a>
+                        <a id="power_price_delete_{{ powerPrice.id }}" href="javascript:;" class="btn btn-danger btn-sm">Borrar</a>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="9" class="text-center">No hay precios de potencia disponibles.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
+
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script>
+    window.onload = function () {
+
+        let powerPriceDeleteButtons = document.querySelectorAll('[id^="power_price_delete_"]');
+        powerPriceDeleteButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                let rowId = btn.id.split("power_price_delete_")[1];
+
+                fetch(`/power/delete/${rowId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            return response.json().then(error => {
+                                throw new Error(error.message);
+                            });
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        let row = document.getElementById("power_price_row_" + rowId);
+                        if (row) {
+                            $(row).fadeOut(400, function () {
+                                $(this).remove();
+                            });
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            });
+        });
+
+    };
+</script>
+</body>
+</html>
